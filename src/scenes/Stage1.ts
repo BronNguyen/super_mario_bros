@@ -71,19 +71,21 @@ export default class Stage1 extends Phaser.Scene {
     this.player = new Mario(this, 100, 514, this.newScale);
     this.add.existing(this.player);
 
-    
-    this.flag = 
-    this.physics.add
-    .sprite(8100, 514,TextureKeys.Flag)
-    .setOrigin(0.5,1)
-    .setDepth(1)
-    .setScale(this.newScale)
-    .setImmovable(true);
+    this.flag = this.physics.add
+      .sprite(8100, 514, TextureKeys.Flag)
+      .setOrigin(0.5, 1)
+      .setDepth(1)
+      .setScale(this.newScale)
+      .setImmovable(true);
 
-    const homeTrigger = this.physics.add.collider(this.player,this.flag,()=>{
-      this.Winning();
-      this.physics.world.removeCollider(homeTrigger);
-    })
+    const homeTrigger = this.physics.add.collider(
+      this.player,
+      this.flag,
+      () => {
+        this.Winning();
+        this.physics.world.removeCollider(homeTrigger);
+      }
+    );
 
     layers.map((layer) => {
       layer.setScale(this.newScale);
@@ -170,9 +172,7 @@ export default class Stage1 extends Phaser.Scene {
       });
       this.physics.add.collider(this.koopas, layer, (_koopa, _layer) => {
         if (layer == obstacleLayer)
-          this.koopas
-            .filter((g) => g.body == _koopa.body)[0]
-            .changeDirection();
+          this.koopas.filter((g) => g.body == _koopa.body)[0].changeDirection();
       });
       this.physics.add.collider(this.flag, layer);
     });
@@ -206,18 +206,18 @@ export default class Stage1 extends Phaser.Scene {
       this.scale.height
     );
 
-    this.goombas.push(new Goomba(this, 780, 514, this.newScale));
-    this.goombas.push(new Goomba(this, 1807, 514, this.newScale));
-
-    this.goombas.push(new Goomba(this, 2155, 514, this.newScale));
-    this.goombas.push(new Goomba(this, 2255, 514, this.newScale));
-
-    this.goombas.push(new Goomba(this, 3477, 342, this.newScale));
-    this.goombas.push(new Goomba(this, 3377, 342, this.newScale));
-    this.goombas.push(new Goomba(this, 3327, 342, this.newScale));
-    this.goombas.push(new Goomba(this, 3262, 342, this.newScale));
-    this.goombas.push(new Goomba(this, 3217, 342, this.newScale));
-    this.goombas.push(new Goomba(this, 3152, 342, this.newScale));
+    this.goombas.push(
+      new Goomba(this, 780, 514, this.newScale),
+      new Goomba(this, 1807, 514, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Goomba(this, Phaser.Math.Between(1000, 7000), 342, this.newScale)
+    );
 
     this.goombas != []
       ? this.goombas.map((goomba) => {
@@ -247,8 +247,18 @@ export default class Stage1 extends Phaser.Scene {
         })
       : true;
 
-    this.koopas.push(new Koopa(this, 680, 342, this.newScale));
-    this.koopas.push(new Koopa(this, 3680, 342, this.newScale));
+    this.koopas.push(
+      new Koopa(this, 680, 342, this.newScale),
+      new Koopa(this, 3680, 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale),
+      new Koopa(this, Phaser.Math.Between(1000, 7000), 342, this.newScale)
+    );
 
     this.koopas != []
       ? this.koopas.map((koopa) => {
@@ -278,7 +288,7 @@ export default class Stage1 extends Phaser.Scene {
               if (koopa.state == KoopaState.Alive) {
                 this.PlayerDying();
               } else {
-                if(Math.abs(_koopa.body.velocity.x)>300){
+                if (Math.abs(_koopa.body.velocity.x) > 300) {
                   this.PlayerDying();
                 }
                 if (_koopa.body.touching.right) {
@@ -299,17 +309,23 @@ export default class Stage1 extends Phaser.Scene {
               return;
             } else koopa.changeDirection();
           });
-          this.physics.add.collider(
-            this.goombas,
-            this.goombas,
-            (_goomba1, _goomba2) => {
-              this.goombas
-                .filter((g) => g.body == _goomba1.body)[0]
-                .changeDirection();
-            }
-          );
         })
       : true;
+    this.physics.add.collider(
+      this.goombas,
+      this.goombas,
+      (_goomba1, _goomba2) => {
+        this.goombas
+          .filter((g) => g.body == _goomba1.body)[0]
+          .changeDirection();
+      }
+    );
+    this.physics.add.collider(this.koopas, this.koopas, (_koopa1, _koopa2) => {
+      this.koopas.filter((k) => k.body == _koopa1.body)[0].changeDirection();
+      if (Math.abs(_koopa1.body.velocity.x) > 300) {
+        _koopa2.destroy();
+      }
+    });
   }
 
   PlayerDying() {
@@ -327,9 +343,9 @@ export default class Stage1 extends Phaser.Scene {
 
   Winning() {
     this.player.GoHome();
-    this.time.delayedCall(4000,()=>{
+    this.time.delayedCall(4000, () => {
       this.scene.start(SceneKeys.GameOver);
-    })
+    });
   }
 
   update() {
