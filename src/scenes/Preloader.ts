@@ -40,6 +40,8 @@ export default class Preloader extends Phaser.Scene {
       frameHeight: 16,
     })
 
+    this.load.image(TextureKeys.Flag, "sprites/flag.png");
+
     this.load.audio(AudioKeys.Jump, "sounds/smb_jump-small.wav");
     this.load.audio(AudioKeys.BigJump, "sounds/smb_jump-super.wav");
     this.load.audio(AudioKeys.Bump, "sounds/smb_bump.wav");
@@ -52,6 +54,7 @@ export default class Preloader extends Phaser.Scene {
     this.load.audio(AudioKeys.Coin, "sounds/smb_coin.wav");
     this.load.audio(AudioKeys.Mushroom, "sounds/smb_powerup_appears.wav");
     this.load.audio(AudioKeys.GetBig, "sounds/smb_powerup.wav");
+    this.load.audio(AudioKeys.WorldClear, "sounds/smb_stage_clear.wav");
   }
 
   create() {
@@ -68,7 +71,7 @@ export default class Preloader extends Phaser.Scene {
     this.anims.create({
       key: AnimationKeys.MarioIdle,
       frames: this.anims.generateFrameNumbers(TextureKeys.Mario, {
-        frames: [0],
+        frames: [6],
       }),
     });
 

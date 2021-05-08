@@ -16,6 +16,7 @@ export default class Stage1 extends Phaser.Scene {
   private goombas: Goomba[] = [];
   private koopas: Koopa[] = [];
   private mushrooms: Mushroom[] = [];
+  private flag!: Phaser.GameObjects.Sprite;
   // private platformStanding!: Phaser.Physics.Arcade.Collider;
   private themeMusic!: Phaser.Sound.BaseSound;
   constructor() {
@@ -24,7 +25,7 @@ export default class Stage1 extends Phaser.Scene {
 
   create() {
     this.themeMusic = this.sound.add(AudioKeys.Theme);
-    this.themeMusic.play();
+    this.themeMusic.play({ volume: 0.5 });
 
     const map = this.make.tilemap({ key: MapKeys.stage1 });
     const tileset = map.addTilesetImage("tileset", TextureKeys.TileSet);
@@ -49,7 +50,7 @@ export default class Stage1 extends Phaser.Scene {
     });
 
     const emptyBoxes = [] as Phaser.Tilemaps.Tile[];
-    const emptyBoxLayer = map.createLayer("emptybox",tileset);
+    const emptyBoxLayer = map.createLayer("emptybox", tileset);
     emptyBoxLayer.forEachTile((tile) => {
       if (tile.properties.hasOwnProperty("changeAble")) {
         emptyBoxes.push(tile);
@@ -67,8 +68,22 @@ export default class Stage1 extends Phaser.Scene {
     ];
 
     this.newScale = this.scale.height / bgLayer.height;
-    this.player = new Mario(this, 795 , 514.2857142857142, this.newScale);
+    this.player = new Mario(this, 100, 514, this.newScale);
     this.add.existing(this.player);
+
+    
+    this.flag = 
+    this.physics.add
+    .sprite(8100, 514,TextureKeys.Flag)
+    .setOrigin(0.5,1)
+    .setDepth(1)
+    .setScale(this.newScale)
+    .setImmovable(true);
+
+    const homeTrigger = this.physics.add.collider(this.player,this.flag,()=>{
+      this.Winning();
+      this.physics.world.removeCollider(homeTrigger);
+    })
 
     layers.map((layer) => {
       layer.setScale(this.newScale);
@@ -85,10 +100,10 @@ export default class Stage1 extends Phaser.Scene {
           (this.player.body as Phaser.Physics.Arcade.Body).blocked.up
         ) {
           if (this.player.MarioState() == CharacterState.Small) {
-            this.player.playSound(AudioKeys.Bump);
+            this.player.PlaySound(AudioKeys.Bump);
           }
           if (this.player.MarioState() == CharacterState.Big) {
-            this.player.playSound(AudioKeys.BreakBlock);
+            this.player.PlaySound(AudioKeys.BreakBlock);
             brickTiles
               .reduce((a, b) =>
                 distance(layer.tileToWorldXY(a.x, a.y), _player.body) <
@@ -119,9 +134,9 @@ export default class Stage1 extends Phaser.Scene {
             )[0]
             .setAlpha(1);
           if (disabledTile.properties.provide == "coin") {
-            this.player.playSound(AudioKeys.Coin);
+            this.player.PlaySound(AudioKeys.Coin);
           } else if (disabledTile.properties.provide == "mushroom") {
-            this.player.playSound(AudioKeys.Mushroom);
+            this.player.PlaySound(AudioKeys.Mushroom);
             this.mushrooms.push(
               new Mushroom(
                 this,
@@ -133,16 +148,16 @@ export default class Stage1 extends Phaser.Scene {
             this.mushrooms.map((mushroom) => {
               this.add.existing(mushroom);
               layers.forEach((layer) => {
-                this.physics.add.collider(mushroom, layer,()=>{
-                  if (layer == obstacleLayer){
+                this.physics.add.collider(mushroom, layer, () => {
+                  if (layer == obstacleLayer) {
                     mushroom.changeDirection();
                   }
                 });
               });
-              this.physics.add.collider(mushroom,this.player,()=>{
-                this.player.getBig();
+              this.physics.add.collider(mushroom, this.player, () => {
+                this.player.GetBig();
                 mushroom.destroy();
-              })
+              });
             });
           }
         }
@@ -153,12 +168,14 @@ export default class Stage1 extends Phaser.Scene {
             .filter((g) => g.body == _goomba.body)[0]
             .changeDirection();
       });
+      this.physics.add.collider(this.koopas, layer, (_koopa, _layer) => {
+        if (layer == obstacleLayer)
+          this.koopas
+            .filter((g) => g.body == _koopa.body)[0]
+            .changeDirection();
+      });
+      this.physics.add.collider(this.flag, layer);
     });
-
-    // test
-    // const abc = activeLayer.findByIndex(2);
-    // abc.setAlpha(0.5);
-    // abc.setCollision(false);
 
     // const debugGraphics = this.add.graphics().setAlpha(0.7);
     // activeLayer.renderDebug(debugGraphics,{
@@ -172,7 +189,7 @@ export default class Stage1 extends Phaser.Scene {
     this.body.setCollideWorldBounds(true);
     this.physics.world.setBounds(
       0,
-      0,
+      -500,
       activeLayer.width * this.newScale,
       this.scale.height * 2
     );
@@ -207,13 +224,14 @@ export default class Stage1 extends Phaser.Scene {
           this.add.existing(goomba);
           this.physics.add.collider(goomba, activeLayer);
           this.physics.add.collider(goomba, this.player, (_goomba, _player) => {
-            if (this.player.state == CharacterState.Dead) return;
+            if (this.player.MarioState() == CharacterState.Dead) return;
             if (_goomba.body.touching.up) {
               goomba.dying();
+              this.player.PlaySound(AudioKeys.Stomp);
               this.player.bouncing();
             }
             if (!_goomba.body.touching.up) {
-              this.playerDying();
+              this.PlayerDying();
             }
           });
           this.physics.add.collider(goomba, this.koopas, (_goomba, _koopa) => {
@@ -245,10 +263,12 @@ export default class Stage1 extends Phaser.Scene {
             }
           );
           this.physics.add.collider(koopa, this.player, (_koopa, _player) => {
-            if (this.player.state == CharacterState.Dead) return;
+            if (this.player.MarioState() == CharacterState.Dead) return;
             if (_koopa.body.touching.up) {
               this.player.bouncing();
+              this.player.PlaySound(AudioKeys.Kick);
               if (koopa.state != KoopaState.Alive) {
+                this.player.PlaySound(AudioKeys.Kick);
                 koopa.pushed(false);
                 return;
               }
@@ -256,12 +276,17 @@ export default class Stage1 extends Phaser.Scene {
             }
             if (!_koopa.body.touching.up) {
               if (koopa.state == KoopaState.Alive) {
-                this.playerDying();
+                this.PlayerDying();
               } else {
+                if(Math.abs(_koopa.body.velocity.x)>300){
+                  this.PlayerDying();
+                }
                 if (_koopa.body.touching.right) {
+                  this.player.PlaySound(AudioKeys.Kick);
                   koopa.pushed(true);
                 }
                 if (_koopa.body.touching.left) {
+                  this.player.PlaySound(AudioKeys.Kick);
                   koopa.pushed(false);
                 }
               }
@@ -287,7 +312,7 @@ export default class Stage1 extends Phaser.Scene {
       : true;
   }
 
-  playerDying() {
+  PlayerDying() {
     this.themeMusic.stop();
     this.player.dying();
     this.time.delayedCall(
@@ -298,6 +323,13 @@ export default class Stage1 extends Phaser.Scene {
       [],
       this
     );
+  }
+
+  Winning() {
+    this.player.GoHome();
+    this.time.delayedCall(4000,()=>{
+      this.scene.start(SceneKeys.GameOver);
+    })
   }
 
   update() {

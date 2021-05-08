@@ -8,6 +8,7 @@ enum TextureKeys {
     Koopa = 'koopa',
     Mushroom = 'mushroom',
     GameOverScreen = 'game-over-screen',
+    Flag = 'flag'
 }
 
 export default TextureKeys;

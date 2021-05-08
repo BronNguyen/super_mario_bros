@@ -11,6 +11,7 @@ enum AudioKeys {
     Coin = "coin",
     Mushroom = "mushroom",
     GetBig = "get-big",
+    WorldClear = "world-clear",
 }
 
 export default AudioKeys;

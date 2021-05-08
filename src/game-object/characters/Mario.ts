@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import AnimationKeys from "~/const/AnimationKeys";
 import AudioKeys from "~/const/AudioKeys";
 import TextureKeys from "~/const/TextureKeys";
-import { State } from "../enemies/Koopa";
 
 export enum CharacterState {
   Small,
@@ -14,12 +13,16 @@ export enum CharacterState {
 export default class Mario extends Phaser.GameObjects.Container {
   private isJumping = false;
   private facedLeft = false;
+  private isWinning = false;
+
   private marioState = CharacterState.Small;
   private mario: Phaser.GameObjects.Sprite;
   private marioBody!: Phaser.Physics.Arcade.Body;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, newScale:number) {
+  // private testOnce = true;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, newScale: number) {
     super(scene, x, y);
 
     this.mario = scene.add
@@ -33,12 +36,23 @@ export default class Mario extends Phaser.GameObjects.Container {
     const body = <Phaser.Physics.Arcade.Body>this.body;
     this.marioBody = body;
     body.setGravityY(2000);
-    body.setSize(this.mario.width*newScale*.9, this.mario.height*newScale);
-    body.setOffset(this.mario.width * -0.5*newScale, -this.mario.height*newScale);
+    body.setSize(
+      this.mario.width * newScale * 0.9,
+      this.mario.height * newScale
+    );
+    body.setOffset(
+      this.mario.width * -0.5 * newScale,
+      -this.mario.height * newScale
+    );
     this.cursors = scene.input.keyboard.createCursorKeys();
   }
 
-  updateAnimations(body:Phaser.Physics.Arcade.Body,walk:AnimationKeys,jump:AnimationKeys,idle:AnimationKeys) {
+  updateAnimations(
+    body: Phaser.Physics.Arcade.Body,
+    walk: AnimationKeys,
+    jump: AnimationKeys,
+    idle: AnimationKeys
+  ) {
     if (body.blocked.down) {
       this.isJumping = false;
       if (body.velocity.x > 0) {
@@ -55,16 +69,22 @@ export default class Mario extends Phaser.GameObjects.Container {
         this.mario.play(walk, true);
       } else {
         this.mario.anims.stop();
+        // if(this.testOnce){
+        //   console.log(idle);
+        //   this.testOnce = false
+        // }
         this.mario.play(idle);
       }
       if (this.cursors.up?.isDown) {
         body.setVelocityY(-1000);
         this.isJumping = true;
-        this.marioState==CharacterState.Small?this.playSound(AudioKeys.Jump):this.playSound(AudioKeys.BigJump);
+        this.marioState == CharacterState.Small
+          ? this.PlaySound(AudioKeys.Jump)
+          : this.PlaySound(AudioKeys.BigJump);
         this.mario.play(jump, true);
       }
       if (this.cursors.space?.isDown) {
-        console.log(this.x,this.y);
+        console.log(this.x, this.y);
       }
     }
   }
@@ -74,59 +94,85 @@ export default class Mario extends Phaser.GameObjects.Container {
   }
 
   dying() {
+    if(this.marioState == CharacterState.Dead) return;
     const marioDie = this.scene.sound.add(AudioKeys.MarioDie);
     marioDie.play();
-    this.state = State.Dead;
+    this.marioState = CharacterState.Dead;
     const body = <Phaser.Physics.Arcade.Body>this.body;
     body.velocity.x = 0;
     body.setVelocityY(-600);
     this.mario.anims.stop();
-    this.mario.play(AnimationKeys.MarioDead,true);
-    this.scene.time.delayedCall(2000, ()=>{
-      this.mario.destroy();
-    },[],this)
+    this.mario.play(AnimationKeys.MarioDead, true);
+    this.scene.time.delayedCall(
+      2000,
+      () => {
+        this.mario.destroy();
+      },
+      [],
+      this
+    );
   }
 
   IsJumping() {
     return this.isJumping;
   }
 
-  MarioState(){
-    return this.marioState
+  MarioState() {
+    return this.marioState;
   }
 
-  getBig() {
+  GetBig() {
     this.marioState = CharacterState.Big;
-    this.mario.setTexture(TextureKeys.BigMario);
-    this.playSound(AudioKeys.GetBig);
+    this.mario.setTexture(TextureKeys.BigMario, 1);
+    // this.testOnce = true;
+    this.PlaySound(AudioKeys.GetBig);
   }
 
-  playSound(key: AudioKeys) {
+  PlaySound(key: AudioKeys) {
     const sound = this.scene.sound.add(key);
     sound.play();
   }
 
-  preUpdate() {
+  GoHome(){
+    if(this.isWinning== true) return;
+    this.isWinning = true;
     const body = <Phaser.Physics.Arcade.Body>this.body;
+    body.setVelocityX(200);
+    this.scene.game.sound.stopAll();
+    this.PlaySound(AudioKeys.WorldClear);
+  }
+
+  preUpdate() {
+    // if(this.testOnce == true){
+    //   this.testOnce = false;
+    //   console.log(this.mario.texture);
+    // }
+
+    const body = <Phaser.Physics.Arcade.Body>this.body;
+    if (this.cursors.left?.isDown) {
+      body.setVelocityX(-300);
+    }
+    if (this.cursors.right?.isDown) {
+      body.setVelocityX(300);
+    }
     switch (this.marioState) {
       case CharacterState.Small: {
-        if (this.cursors.left?.isDown) {
-          body.setVelocityX(-300);
-        }
-        if (this.cursors.right?.isDown) {
-          body.setVelocityX(300);
-        }
-        this.updateAnimations(body,AnimationKeys.MarioWalk,AnimationKeys.MarioJump,AnimationKeys.MarioIdle);
+        this.updateAnimations(
+          body,
+          AnimationKeys.MarioWalk,
+          AnimationKeys.MarioJump,
+          AnimationKeys.MarioIdle
+        );
       }
       case CharacterState.Big: {
-        if (this.cursors.left?.isDown) {
-          body.setVelocityX(-300);
-        }
-        if (this.cursors.right?.isDown) {
-          body.setVelocityX(300);
-        }
-        this.updateAnimations(body,AnimationKeys.BigMarioWalk,AnimationKeys.BigMarioJump,AnimationKeys.BigMarioIdle);
+        this.updateAnimations(
+          body,
+          AnimationKeys.BigMarioWalk,
+          AnimationKeys.BigMarioJump,
+          AnimationKeys.BigMarioIdle
+        );
       }
     }
   }
+
 }
